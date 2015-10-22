@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 
+// This class is not threadsafe.
 template <class T>
 class UnionFound {
  public:
