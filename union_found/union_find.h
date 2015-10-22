@@ -1,17 +1,22 @@
+#ifndef COMMON_UNION_FIND_H
+#define COMMON_UNION_FIND_H
+
 #include <cstddef>
 #include <memory>
 #include <vector>
 
+namespace common {
+
 // This class is not threadsafe.
 template <class T>
-class UnionFound {
+class UnionFind {
  public:
   struct Node {
     T data;
     Node* parent = nullptr;
     // The height of the tree rooted at this.
     int rank = 1;
-    Node(const T& _d) : data(_d) : parent(this) {}
+    Node(const T& _d) : data(_d), parent(this) {}
   };
 
   Node* Create(const T& data) {
@@ -44,6 +49,18 @@ class UnionFound {
     return node;
   }
 
+  int NumRoots() const {
+    int i = 0;
+    for (auto &root : roots_) {
+      if (root->parent == root.get()) i++;
+    }
+    return i;
+  }
+
 private:
   std::vector<std::unique_ptr<Node>> roots_;
 };
+
+}  // namespace common
+
+#endif  // COMMON_UNION_FIND_H
