@@ -1,5 +1,6 @@
 #include "kmp.h"
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -19,12 +20,13 @@ int KMP::Match(const std::string& s) {
 	// index of s.
 	std::size_t i = 0;
 	while (pos < p_.size() && i < s.size()) {
+		//		std::cout << pos << " " << i << std::endl;
 		if (p_.at(pos) == s.at(i)) {
 			pos++; i++;
 		} else if (pos == 0) {
 			i++;
 		} else {
-			pos = pi_[pos];
+			pos = pi_[pos - 1];
 		}
 	}
 
