@@ -10,9 +10,9 @@ KMP::KMP(const std::string& pattern) : p_(pattern) {
 	ComputePrefixFunction();
 }
 
-bool KMP::Match(const std::string& s) {
-	if (p_.empty()) return true;
-	if (s.empty()) return false;
+int KMP::Match(const std::string& s) {
+	if (p_.empty()) return 0;
+	if (s.empty()) return -1;
 
 	// pos of p_.
 	std::size_t pos = 0;
@@ -28,8 +28,8 @@ bool KMP::Match(const std::string& s) {
 		}
 	}
 
-	if (pos == p_.size()) return true;
-	return false;
+	if (pos == p_.size()) return i - p_.size();
+	return -1;
 }
 
 int KMP::Prefix(int pos) const {

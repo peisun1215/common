@@ -17,11 +17,7 @@ int main(int argc, char** argv) {
 	}
 	std::cout << std::endl;
 
-	if (kmp.Match(s)) {
-		std::cout << s << " matches " << p << std::endl;
-	} else {
-		std::cout << "doesn't match!\n";
-	}
+	std::cout << s << " matches " << p << " at " << kmp.Match(s) << std::endl;
 
 	return 0;
 }

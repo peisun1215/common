@@ -8,7 +8,7 @@ class KMP {
  public:
 	KMP(const std::string& pattern);
 
-	bool Match(const std::string& s);
+	int Match(const std::string& s);
 
 	int Prefix(int pos) const;
 
