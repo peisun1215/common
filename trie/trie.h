@@ -39,7 +39,7 @@ public:
     c->has_value = true;
   }
 
-  bool HasWord(const std::string& word) {
+  bool HasWord(const std::string& word) const {
     auto* c = root_.get();
     for (int i = 0; i < word.size(); ++i) {
       assert(IsValid(word.at(i)));
@@ -49,7 +49,7 @@ public:
     return c->has_value;
   }
 
-  bool HasPrefix(const std::string& prefix) {
+  bool HasPrefix(const std::string& prefix) const {
     auto* c = root_.get();
     for (int i = 0; i < prefix.size(); ++i) {
       assert(IsValid(prefix.at(i)));
@@ -59,7 +59,7 @@ public:
     return true;
   }
 
-  bool IsValid(char c) {
+  bool IsValid(char c) const {
     return c >= 'a' && c <= 'z';
   }
 
