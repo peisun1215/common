@@ -10,6 +10,7 @@ class KMP {
 
 	int Match(const std::string& s);
 
+	// The length of the prefix of pattern is that also a suffix of p_[0, pos].
 	int Prefix(int pos) const;
 
  private:
