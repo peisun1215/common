@@ -1,13 +1,24 @@
+// A simple Thread per connection server without using threadpool.
+
 extern "C" {
 #include "csapp.h"
 }
 
+#include <cstdlib>
+#include <thread>
 #include <string>
+#include <iostream>
+#include <cassert>
 
 using namespace std;
 
 typedef int int32;
 typedef unsigned uint32;
+
+#define MAXLINE 1024*10
+
+void echo(int a);
+void SolveAndAnswer(int a);
 
 class TCPSocket {
  public:
@@ -92,26 +103,47 @@ class TCPSocket {
   }
 
   // Blocking call.
-  static int32 Accept(int32 socketfd) {
-    sockaddr in_addr;
-    socklen_t clientlen = sizeof(sockaddr);
-    int32 connfd = accept(socketfd, &in_addr, &clientlen);
-    return connfd;
+  static void Accept(int32 socketfd,
+                     std::function<void(int32 fd,
+                                        string hostname, string port)> f) {
+    while (1) {
+      sockaddr in_addr;
+      socklen_t clientlen = sizeof(sockaddr);
+      int32 connfd = accept(socketfd, &in_addr, &clientlen);
+      char client_hostname[10240];
+      char client_port[1024];
+      getnameinfo(&in_addr, clientlen,
+                  client_hostname, MAXLINE, client_port, MAXLINE, 0);
+
+      // Use a threadpool.
+      std::thread t([=]() {f(connfd, client_hostname, client_port);});
+      t.detach();
+    }
+  }
+
+  static void HandleConnection(int32 connfd, string hostname, string port) {
+    std::cout << "Connected to " << hostname << ":" << port << std::endl;
+    // echo(connfd);
+    SolveAndAnswer(connfd);
+    std::cout << "Disconnected from " << hostname << ":" << port << std::endl;
+    close(connfd);
   }
 };
 
-#define MAXLINE 1024*10
-
 void StartClient(char** argv) {
-  int clientfd;
-  char *host, *port, buf[MAXLINE];
+  int32 clientfd = TCPSocket::Dial(argv[1], argv[2]);
+  if (clientfd < 0) {
+    printf("fail!");
+    return;
+  }
+
   rio_t rio;
-  host = argv[1];
-  port = argv[2];
-  clientfd = Open_clientfd(host, stoi(port));
   Rio_readinitb(&rio, clientfd);
+
+  char buf[MAXLINE];
   while (Fgets(buf, MAXLINE, stdin) != NULL) {
     Rio_writen(clientfd, buf, strlen(buf));
+
     Rio_readlineb(&rio, buf, MAXLINE);
     Fputs(buf, stdout);
   }
@@ -127,24 +159,39 @@ void echo(int connfd) {
   while((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) {
     printf("server received %d bytes\n", (int)n);
     Rio_writen(connfd, buf, n);
+    std::cout << buf;
+  }
+}
+
+void SolveAndAnswer(int32 connfd) {
+  size_t n;
+  char buf[MAXLINE];
+  rio_t rio;
+  Rio_readinitb(&rio, connfd);
+  while ((n = Rio_readlineb(&rio, buf, MAXLINE)) != 0) {
+    std::cout << "Received: " << buf << endl;
+
+    string s(buf);
+    size_t pos = s.find("+");
+    assert(pos != string::npos);
+    int32 res = stoi(s.substr(0, pos)) + stoi(s.substr(pos + 1));
+    strcpy(buf, (to_string(res) + "\n").c_str());
+    std::cout << "Result: " << buf << std::endl;
+    Rio_writen(connfd, buf, strlen(buf));
   }
 }
 
 void StartServer(char** argv) {
-  int listenfd, connfd;
-  socklen_t clientlen;
-  sockaddr_storage clientaddr; /* Enough room for any addr */
-  char client_hostname[MAXLINE], client_port[MAXLINE];
-  listenfd = Open_listenfd(stoi(argv[1]));
-  while (1) {
-    clientlen = sizeof(sockaddr_storage); /* Important! */
-    connfd = Accept(listenfd, (SA *)&clientaddr, &clientlen);
-    getnameinfo((SA *) &clientaddr, clientlen,
-                client_hostname, MAXLINE, client_port, MAXLINE, 0);
-    printf("Connected to (%s, %s)\n", client_hostname, client_port);
-    echo(connfd);
-    Close(connfd);
+  int32 listenfd = TCPSocket::Listen(argv[1]);
+  if (listenfd < 0) {
+    printf("Failed to start server");
+    return;
   }
+
+  TCPSocket::Accept(listenfd, [](int32 connfd, string hostname, string port) {
+      TCPSocket::HandleConnection(connfd, hostname, port);
+    });
+
   exit(0);
 }
 

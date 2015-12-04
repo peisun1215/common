@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
 
   int64 total_positive = 0;
   int64 false_positive = 0;
-  for (int i = 0; i < test_size; ++i) {
+  const int tmp = std::stoi(argv[3]);
+  for (int i = 0; i < tmp; ++i) {
     int r = std::rand();
 
     if (!hf.Contains(r)) {
